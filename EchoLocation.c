@@ -13,7 +13,7 @@
 volatile int16_t t1=0, t2 =0;
 volatile int16_t triggered =0;
 
-float F_CPU = 14.7546e6, delay = 10e-6, distance;
+float F_CPU = 14.7546/8, delay = 10, distance=0.0;
 int uart_putchar(char c, FILE *stream);
 int uart_getchar(FILE *stream);
 
@@ -41,57 +41,70 @@ void init_uart(void) {
 
 
 void generatePulse(){
-PORTB |= (1<<PB1);
-TCCR1A =0;
-TCCR1B = (1<<CS10); //start timer
-TCNT0;
-OCR1A = (int)(F_CPU*delay-1);
-while(!(TIFR1 & (1<<OCF1A)));
-TIFR1 = (1<<OCF1A);
-TCCR1B =0;
-PORTB &= ~(1<<PB1);
+	printf("generate pulse start\n");
+	PORTB |= (1<<PB1);
+	TCCR1A =0;
+	TCCR1B = (1<<CS11); //start timer
+	TCNT1=0;
+	OCR1A = (int)((F_CPU/1600e2)-1);
+	TIFR1 = (1<<OCF1A);
+	while(!(TIFR1 & (1<<OCF1A)));
+	//TIFR1 = (1<<OCF1A);
+	TCCR1B =0;
+	TCNT1=0;
+	PORTB &= ~(1<<PB1);
+	printf("generate pulse end\n");
 }
 
-void detectEcho(){
-TCCR1A =0;
-TCCR1B = (1<<CS10) | (1<<CS11) | (1<<ICNC1) | (1<<ICES1); //start timer and capture the rising edge
-TCNT0;
-while (!(TIFR1 & (1<<ICF1))); //wait for the rising edge
-t1 = ICR1L;
-t1 |= (ICR1H<<8);
-TIFR1 |= (1<<ICF1); //clear flag
-
-TCCR1B &= ~(1<<ICES1); //capture the falling edge
-while (!(TIFR1 & (1<<ICF1))); //wait for the falling edge
-t1 = ICR1L;
-t1 |= (ICR1H<<8);
-TIFR1 |= (1<<ICF1); //clear flag
-TCCR1B =0; //turn off the timer
+/*void detectEcho(){
+	
+	printf("detect echo start\n");
+	TCCR1A =0;
+	TCCR1B = (1<<CS11) | (1<<ICES1); //start timer and capture the rising edge
+	TCNT1=0;
+	TIFR1 |= (1<<ICF1);
+	while (!(TIFR1 & (1<<ICF1)));
+	t1 = ICR1L;
+	t1 |= (ICR1H<<8);
+	 //wait for the rising edge
+	 //clear flag
+	
+	printf("detect echo middle\n");
+	TCCR1A =0;
+	TCCR1B =  (1<<CS11); //start timer and capture the rising edge
+	TIFR1 |= (1<<ICF1);
+	while (!(TIFR1 & (1<<ICF1))); //wait for the rising edge
+	printf("detect echo end\n");
+	t2 = ICR1L;
+	t2 |= (ICR1H<<8); //clear flag
+	TCNT1 =0;
+	TCCR1B =0;
 }
-
+*/
 int main(void)
 {
 	init_uart();
 	DDRD = 0x00;
 	DDRB = 0xFF;
 
+	printf("starting measurements...\n");
 
 	while (1)
 	{
-	triggered = PIND & (1<<PD7);
+		triggered = PIND & (1<<PD7);
 
-	if (triggered)
-	{
-	generatePulse();
-	detectEcho();
-	}
-	
-	if (distance) {
-	
-		distance = (double)((t2-t1)*4)/58;
-		printf("distance = %f\n", distance);
-		distance = 0;
-	}
-
+		if (triggered)
+		{
+			printf("triggered\n");
+			generatePulse();
+			//detectEcho();
+		}
+		
+		/*distance = (double)((t2-t1)*4)/58;
+		if (distance) {
+			printf("distance = %f\n", distance);
+			distance = 0;
+		}
+*/
 	}
 }
