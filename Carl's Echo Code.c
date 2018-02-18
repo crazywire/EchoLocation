@@ -197,7 +197,7 @@ void trigger(){
 	
 	if(trigger_flag == 1){
 		trigger_flag = 0;
-		TIFR1 = 0x00;
+		
 		
 		//clear any existing timer1 flags.
 		//This is in case we want to reset by pressing a button
