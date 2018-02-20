@@ -1,6 +1,4 @@
 
-
-
 #include <stdio.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
@@ -28,7 +26,6 @@ float object_distance = 0.0;
 ISR(INT0_vect){
 	
 	echo_flag = 1;
-	printf("USART IS WORKING");
 }
 
 
@@ -171,6 +168,7 @@ int main(void){
 	configure_ports();
 	configure_timers();
 	configure_interrupts();
+	init_uart();
 	sei();
 	
 	printf("USART system booted\n");
@@ -179,12 +177,12 @@ int main(void){
 	
 
 	while(1){
-		
-		sonic_pulse_counts = echo_trigger();
-		
-		printf("The value of sonic_pulse_counts is %d \n ", sonic_pulse_counts);
-		ICR1 = 0;
-		
-		
+		if (echo_flag) {
+			echo_flag = 0;
+				
+			sonic_pulse_counts = echo_trigger();
+			printf("The value of sonic_pulse_counts is %d \n ", sonic_pulse_counts);
+			ICR1 = 0;
+		}		
 	}
 }
