@@ -9,14 +9,12 @@ const float fclk = 14.7456e10;
 const float trigger_pulse_length = 10e-6;
 
 
-volatile unsigned int sonic_pulse_counts = 0;
+unsigned int sonic_pulse_counts = 0;
 
 volatile unsigned short echo_flag = 0;
 volatile unsigned short microsecs_elapsed = 0;
 
-
-
-float object_distance = 0.0; 
+unsigned int object_distance = 0;
 
 //**** USART FILE IMPORTS AND FUNCTION DECLARATIONS***
 int uart_putchar(char c, FILE *stream);
@@ -30,6 +28,13 @@ FILE mystdin = FDEV_SETUP_STREAM(NULL, uart_getchar, _FDEV_SETUP_READ);
 ISR(INT0_vect){
 	printf("The External ISR Works \n ");
 	echo_flag = 1;
+	EIMSK &= ~(1<<INT0); 
+	//disable future interrupts so that only
+	//the first wire touch will raise the flag
+	//(To prevent bounciness)
+	//We will then re-enable the mask in the main once 
+	//all the code has executed as prompted by this 
+	//external interrupt (INT0)
 }
 
 ISR(TIMER0_COMPA_vect){
@@ -41,33 +46,20 @@ ISR(TIMER0_COMPA_vect){
 
 
 ISR(TIMER1_CAPT_vect){
-	// printf("We have entered the input capture ISR\n"); 
 	
 	//whenever this ISR occurs, the value of TCNT1 is stored in ICR1.
 	//We are using this to measure the length of the sonic pulse (in clock counts)
 	//The clock counts will then be converted to distance later
-	
-	
 	 if(ICR1 == 0) {
-	 	// printf("THE RISING EDGE INPUT CAPTURE WORKS \n");
-	
 	 	TCCR1B &= ~(1<<ICES1); //set to falling edge trigger
-		
 		TCCR1B |= (1<<CS11); //start timer at 8 prescaler
 	}
 
 	else{ 
 		TCCR1B &= ~(1<<CS11); //stop timer1 clock 
-		
-		printf("THE FALLING EDGE INPUT CAPTURE WORKS \n"); //feedback 
-		printf("The Value of sonic_pulse_counts is: %d \n ", sonic_pulse_counts);
-		
 		TCCR1B |= (1<<ICES1); //set detection mode back to rising edge 
 		TIMSK1 &= ~(1<<ICIE1); //disable future input capture interrupts
-		
 	}
-	
-	
 }
 
 
@@ -84,12 +76,6 @@ void configure_timers(){
 	
 	//***TIMER1****
 	TCCR1B |= (1<<ICES1); //rising edge trigger for input capture (PD6).
-	
-	
-	
-	
-	
-	
 }
 
 void configure_ports(){	
@@ -159,6 +145,10 @@ int measure_sonic_pulse(){
 }
 
 
+	
+	
+	
+
 
 
 
@@ -169,21 +159,47 @@ int main(void){
 	configure_external_interrupts();
 	init_uart();
 	sei();
-	
-	
-	//convert sonic_pulse_counts to object_distance
-	
-	
 
 	while(1){
 		if(echo_flag){
-			
-//			printf("The echo flag if statement works \n");
 			echo_flag = 0;
 			send_trigger_pulse();
 			sonic_pulse_counts = measure_sonic_pulse();	
+			printf("The Value of sonic_pulse_counts is %d \n", sonic_pulse_counts);
+			
+			//object_distance = (8*343*(sonic_pulse_counts/fclk));
+			object_distance = (int)(sonic_pulse_counts * 1372000 / fclk );
+			/*
+			- 14745600 clock counts /sec at 0 prescaler.
+			- At 8 prescaler, 14745600 / 8 = 1843200 clock counts per sec.
+
+			1843200 counts/sec is new effective frequency
+				X counts / (14745600 /8 (counts/sec))
+				X counts / (1843200 counts/sec) = ( X / 1843200) (units = seconds)
+				So then,
+				(( X / 1843200) seconds ) * ( 343 meters /second) = distance
+				then distance / 2 = number of meters
+				and then distance * 100 = number of centimeters
+			*/
+			
+			printf("The object distance is %d kilometers\n", object_distance);
+			//THIS PRINTOUT DOESNT WORK!!!
+			
+			//object_distance = (int)(sonic_pulse_counts * 1372000); <--- WORKS FINE
+			
+			// BUT THE MOMENT I DIVIDE BY fclk the value becomes 0. I don't understand.
+			
+			/*   http: *****   //www.avrfreaks.net/forum/problems-float-printf-solved */
+			
+			printf("The object distance is %d kilometers\n", object_distance);
+			
+			
 			ICR1 = 0; 
-			//measure_sonic_pulse returns ICR1 
+					//clear ICR1 in preparation for next input capture event
+					//(As triggered by the external interrupt INT0)
+					
+			EIMSK |= (1<<INT0); //re-enable the external interrupt
+			
 		}
 	
 	
