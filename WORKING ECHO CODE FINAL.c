@@ -40,13 +40,12 @@ ISR(INT0_vect){
 ISR(TIMER0_COMPA_vect){
 	TIMSK0 &= ~(1<<OCIE0A); //disable interrupt mask
 	microsecs_elapsed += 10; //increment 
-	printf("The 10microsec timer works\n"); //feedback
+//	printf("The 10microsec timer works\n"); //feedback
 }
 
 
 
 ISR(TIMER1_CAPT_vect){
-	
 	//whenever this ISR occurs, the value of TCNT1 is stored in ICR1.
 	//We are using this to measure the length of the sonic pulse (in clock counts)
 	//The clock counts will then be converted to distance later
@@ -72,7 +71,6 @@ void configure_timers(){
 	TCCR0A |= (1<<WGM01); //CTC Mode
 	OCR0A = (int)fclk*trigger_pulse_length; //147 counts per 10 microsec
 	TCCR0B |= (1<<CS00); //turn on clock @ prescaler of 0
-	
 	
 	//***TIMER1****
 	TCCR1B |= (1<<ICES1); //rising edge trigger for input capture (PD6).
@@ -146,11 +144,7 @@ int measure_sonic_pulse(){
 
 
 	
-	
-	
-
-
-
+//*****************MAIN METHOD**************************
 
 int main(void){
 	
@@ -159,7 +153,8 @@ int main(void){
 	configure_external_interrupts();
 	init_uart();
 	sei();
-
+		
+	
 	while(1){
 		if(echo_flag){
 			echo_flag = 0;
@@ -167,32 +162,13 @@ int main(void){
 			sonic_pulse_counts = measure_sonic_pulse();	
 			printf("The Value of sonic_pulse_counts is %d \n", sonic_pulse_counts);
 			
-			//object_distance = (8*343*(sonic_pulse_counts/fclk));
-			object_distance = (int)(sonic_pulse_counts * 1372000 / fclk );
-			/*
-			- 14745600 clock counts /sec at 0 prescaler.
-			- At 8 prescaler, 14745600 / 8 = 1843200 clock counts per sec.
-
-			1843200 counts/sec is new effective frequency
-				X counts / (14745600 /8 (counts/sec))
-				X counts / (1843200 counts/sec) = ( X / 1843200) (units = seconds)
-				So then,
-				(( X / 1843200) seconds ) * ( 343 meters /second) = distance
-				then distance / 2 = number of meters
-				and then distance * 100 = number of centimeters
-			*/
+			object_distance = (int)(sonic_pulse_counts * 0.0093);
 			
-			printf("The object distance is %d kilometers\n", object_distance);
-			//THIS PRINTOUT DOESNT WORK!!!
+			//object_distance = (8*343*(sonic_pulse_counts/fclk))/2
 			
-			//object_distance = (int)(sonic_pulse_counts * 1372000); <--- WORKS FINE
+			//object_distance = (int)(sonic_pulse_counts * 1372 /fclk );
 			
-			// BUT THE MOMENT I DIVIDE BY fclk the value becomes 0. I don't understand.
-			
-			/*   http: *****   //www.avrfreaks.net/forum/problems-float-printf-solved */
-			
-			printf("The object distance is %d kilometers\n", object_distance);
-			
+			printf("The object distance is %d cm \n", object_distance);
 			
 			ICR1 = 0; 
 					//clear ICR1 in preparation for next input capture event
@@ -201,7 +177,5 @@ int main(void){
 			EIMSK |= (1<<INT0); //re-enable the external interrupt
 			
 		}
-	
-	
 	}				
 }
