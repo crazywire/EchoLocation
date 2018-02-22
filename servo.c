@@ -11,9 +11,7 @@
 const float fclck = 14.7546e6/64;
 const float fservo = 50.0;
 const float delta_t = 1.0e-3;
-const float zeroDegrees = 0.388e-3;
-const float nintyDegrees = 1.264e-3;
-const float OneEightydegrees = 2.14e-3;
+
 
 
 int uart_putchar(char c, FILE *stream);
@@ -63,20 +61,43 @@ void delay(int delay)
 
 int main()
 {
+
+	 
+	 int zero_deg_pulse = (int)(fclck*0.49e-3);
+	 int fifteen_deg_pulse = (int)(fclck*0.1391e-3);
+	 int ninety_deg_pulse = (int)(fclck*1.325e-3);
+	
 	init_uart();
 	//Configure TIMER1
-	TCCR1A=(1<<COM1A1)|(1<<COM1B1)|(1<<WGM11);        //NON Inverted PWM
-	TCCR1B=(1<<WGM13)|(1<<WGM12)|(1<<CS11)|(1<<CS10); //PRESCALER=64 MODE 14(FAST PWM)
+	TCCR1A|=(1<<COM1A1)|(1<<COM1B1)|(1<<WGM11);        //NON Inverted PWM
+	TCCR1B|=(1<<WGM13)|(1<<WGM12)|(1<<CS11)|(1<<CS10); //PRESCALER=64 MODE 14(FAST PWM)
 	ICR1= (int)(fclck/fservo);  //fPWM=50Hz (Period = 20ms Standard).
 	DDRD=(1<<PD4)|(1<<PD5);   //PWM Pins as Out
 	//if you want use PIN D4, use 0CR1B in the while loop. This way you can run two servos.
+	OCR1A = zero_deg_pulse;
 	while(1)
 	{
-		OCR1A=(int)(zeroDegrees*fclck);  //0 degree
-		delay(100);
-		OCR1A=(int)(nintyDegrees*fclck);  //90 degree
-		delay(100);
-		OCR1A=(int)(OneEightydegrees*fclck);  //180 degree
-		delay(100);
+		for(int x = zero_deg_pulse; x <= ninety_deg_pulse; x += fifteen_deg_pulse){
+			
+			OCR1A = x;
+			OCR1B = OCR1A;
+			delay(50);
+			
+		}
+		OCR1A = zero_deg_pulse;
+		OCR1B = OCR1A;
+		
+		
+
 	}
 }
+
+
+// 	 float zeroDegrees = 0.49e-3;
+// 	 float fifteenDegrees = zeroDegrees+0.1391e-3;
+// 	 float thirtyDegrees = fifteenDegrees+0.1391e-3;
+// 	 float fortyFiveDegrees = thirtyDegrees+0.1391e-3;
+// 	 float sixtyDegrees = fortyFiveDegrees+0.1391e-3;
+// 	 float seventyFiveDegrees = sixtyDegrees+0.1391e-3;
+// 	 float nintyDegrees = 1.325e-3;
+// 	 float OneEightydegrees = 2.16e-3;
