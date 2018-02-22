@@ -12,7 +12,7 @@ const float fclck = 14.7546e6/64;
 const float fservo = 50.0;
 const float delta_t = 1.0e-3;
 
-
+ 
 
 int uart_putchar(char c, FILE *stream);
 int uart_getchar(FILE *stream);
@@ -61,11 +61,14 @@ void delay(int delay)
 
 int main()
 {
-
-	 
-	 int zero_deg_pulse = (int)(fclck*0.49e-3);
-	 int fifteen_deg_pulse = (int)(fclck*0.1391e-3);
-	 int ninety_deg_pulse = (int)(fclck*1.325e-3);
+	
+	int one_deg_pulse = (int)(fclck*9.3e-6);
+	int zero_deg_pulse = (int)(fclck*0.49e-3); //far left position
+	
+	int angle_increment = one_deg_pulse * 15; //*15 means 15 degree increment
+	
+	int ninety_deg_pulse = zero_deg_pulse + (one_deg_pulse*90); //reference position on motor
+	//*90 means 90 degree angle
 	
 	init_uart();
 	//Configure TIMER1
@@ -77,18 +80,15 @@ int main()
 	OCR1A = zero_deg_pulse;
 	while(1)
 	{
-		for(int x = zero_deg_pulse; x <= ninety_deg_pulse; x += fifteen_deg_pulse){
+		for(int x = zero_deg_pulse; x <= ninety_deg_pulse; x += angle_increment){
 			
 			OCR1A = x;
 			OCR1B = OCR1A;
-			delay(50);
+			delay(25);
 			
 		}
 		OCR1A = zero_deg_pulse;
 		OCR1B = OCR1A;
-		
-		
-
 	}
 }
 
