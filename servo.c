@@ -11,9 +11,9 @@
 const float fclck = 14.7546e6/64;
 const float fservo = 50.0;
 const float delta_t = 1.0e-3;
-const float zeroDegrees = 1.0e-3;
-const float nintyDegrees = 1.5e-3;
-const float OneEightydegrees = 2.0e-3;
+const float zeroDegrees = 0.388e-3;
+const float nintyDegrees = 1.264e-3;
+const float OneEightydegrees = 2.14e-3;
 
 
 int uart_putchar(char c, FILE *stream);
@@ -73,10 +73,10 @@ int main()
 	while(1)
 	{
 		OCR1A=(int)(zeroDegrees*fclck);  //0 degree
-		delay(50);
+		delay(100);
 		OCR1A=(int)(nintyDegrees*fclck);  //90 degree
-		delay(50);
+		delay(100);
 		OCR1A=(int)(OneEightydegrees*fclck);  //180 degree
-		delay(50);
+		delay(100);
 	}
 }
