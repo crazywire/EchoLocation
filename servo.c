@@ -6,12 +6,46 @@
 */
 #include <stdio.h>
 #include <avr/io.h>
-const float fclck = 14.7546e6;
-const float fservo = 50.0e6;
+#include <avr/pgmspace.h>
+
+const float fclck = 14.7546e6/64;
+const float fservo = 50.0;
 const float delta_t = 1.0e-3;
 const float zeroDegrees = 1.0e-3;
 const float nintyDegrees = 1.5e-3;
 const float OneEightydegrees = 2.0e-3;
+
+
+int uart_putchar(char c, FILE *stream);
+int uart_getchar(FILE *stream);
+FILE mystdout = FDEV_SETUP_STREAM(uart_putchar, NULL, _FDEV_SETUP_WRITE);
+FILE mystdin = FDEV_SETUP_STREAM(NULL, uart_getchar, _FDEV_SETUP_READ);
+
+int uart_putchar(char c, FILE *stream)
+{
+	loop_until_bit_is_set(UCSR0A, UDRE0);
+	UDR0 = c;
+	return 0;
+}
+
+
+int uart_getchar(FILE *stream)
+{
+	/* Wait until data exists. */
+	loop_until_bit_is_set(UCSR0A, RXC0);
+	return UDR0;
+}
+
+
+void init_uart(void)
+{
+	UCSR0B = (1<<RXEN0) | (1<<TXEN0);
+	UBRR0 = 95;//7; // configures a baud rate of 115200
+	stdout = &mystdout;
+	stdin = &mystdin;
+	printf("USART system booted\n");
+}
+
 //Simple Wait Function
 void delay(int delay)
 {
@@ -20,27 +54,29 @@ void delay(int delay)
 		TCCR0A=0;
 		TCCR0B = (1<<CS00) | (1<<CS02);
 		TCNT0=0;
-		OCR0A = (int)(fclck*delta_t -1);
+		OCR0A = (int)(fclck*delta_t-1);
 		TIFR1 = (1<<OCF1A);
 		while(!(TIFR1 &(1<<OCF1A)));
 	}
 	TCCR0B =0;
 }
+
 int main()
 {
+	init_uart();
 	//Configure TIMER1
-	TCCR1A|=(1<<COM1A1)|(1<<COM1B1)|(1<<WGM11);        //NON Inverted PWM
-	TCCR1B|=(1<<WGM13)|(1<<WGM12)|(1<<CS11)|(1<<CS10); //PRESCALER=64 MODE 14(FAST PWM)
-	ICR1= (int)(fclck/fservo -1);  //fPWM=50Hz (Period = 20ms Standard).
-	DDRD|=(1<<PD4)|(1<<PD5);   //PWM Pins as Out
+	TCCR1A=(1<<COM1A1)|(1<<COM1B1)|(1<<WGM11);        //NON Inverted PWM
+	TCCR1B=(1<<WGM13)|(1<<WGM12)|(1<<CS11)|(1<<CS10); //PRESCALER=64 MODE 14(FAST PWM)
+	ICR1= (int)(fclck/fservo);  //fPWM=50Hz (Period = 20ms Standard).
+	DDRD=(1<<PD4)|(1<<PD5);   //PWM Pins as Out
 	//if you want use PIN D4, use 0CR1B in the while loop. This way you can run two servos.
 	while(1)
 	{
-		OCR1A=zeroDegrees*fclck;  //0 degree
-		delay(500);
-		OCR1A=nintyDegrees*fclck;  //90 degree
-		delay(500);
-		OCR1A=OneEightydegrees*fclck;  //180 degree
-		delay(500);
+		OCR1A=(int)(zeroDegrees*fclck);  //0 degree
+		delay(50);
+		OCR1A=(int)(nintyDegrees*fclck);  //90 degree
+		delay(50);
+		OCR1A=(int)(OneEightydegrees*fclck);  //180 degree
+		delay(50);
 	}
 }
