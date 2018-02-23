@@ -161,9 +161,7 @@ int main(void){
 			send_trigger_pulse();
 			sonic_pulse_counts = measure_sonic_pulse();	
 			printf("The Value of sonic_pulse_counts is %d \n", sonic_pulse_counts);
-			
-			//object_distance = (int)(sonic_pulse_counts * 0.0093);
-			
+
 			object_distance = (int)(4*34300*(sonic_pulse_counts/fclk));
 			
 			
