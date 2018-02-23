@@ -5,7 +5,7 @@
 #include <avr/pgmspace.h>
 
 
-const float fclk = 14.7456e10;
+const float fclk = 14.7456e6;
 const float trigger_pulse_length = 10e-6;
 
 
@@ -162,11 +162,11 @@ int main(void){
 			sonic_pulse_counts = measure_sonic_pulse();	
 			printf("The Value of sonic_pulse_counts is %d \n", sonic_pulse_counts);
 			
-			object_distance = (int)(sonic_pulse_counts * 0.0093);
+			//object_distance = (int)(sonic_pulse_counts * 0.0093);
 			
-			//object_distance = (8*343*(sonic_pulse_counts/fclk))/2
+			object_distance = (int)(4*34300*(sonic_pulse_counts/fclk));
 			
-			//object_distance = (int)(sonic_pulse_counts * 1372 /fclk );
+			
 			
 			printf("The object distance is %d cm \n", object_distance);
 			
