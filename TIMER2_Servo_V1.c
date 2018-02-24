@@ -19,6 +19,9 @@ const float fclk_1024prescaler = 14400;
 const float servo_period = 2e-2; //20ms;
 
 
+const unsigned int period_counts_128ps_clk = 2304; 
+//20ms * fclk_128prescale
+
 
  
 
@@ -50,41 +53,94 @@ void init_uart(void)
 
 volatile unsigned short num_resets = 0;
 
-volatile unsigned short resets_per_pwm_cycle = 0;
 
-volatile unsigned short reset_val = 0;
 
 ISR(TIMER2_OVF_vect){
+	
+	printf("OVERFLOW ISR WORKS\n #resets = %d\n", num_resets);
+	
+	//we are going to use this to prevent overflow of TCNT2 to 0x00 and
+	//keep OC2A low until the end of the pwm period.
 
-	//we are going to use this to prevent overflow
-
-	//when this happens we want to set TCNT2 to OCR2B + 1
 	//also have to increment number of resets to keep track of them
 
-	TCNT2 = reset_val;
+	TCNT2 = 1; //OC2A is only set at TCNT2 = 0x00 so by making TCNT2 = 1
+				//we keep OC2A at low value
 
 	num_resets += 1;
 
-	if(num_resets >= resets_per_pwm_cycle){
+	if((num_resets*255) >= (period_counts_128ps_clk - OCR2A)){
+		//num_resets*255 = num_resets*(256 - 1)
+		//if we set TCNT2 = 12 above, we would have num_resets*(256 - 1)
 		num_resets = 0;
 
 		TIMSK2 &= ~(1<<TOIE2);	//disable future overflow interrupts
 		//This means that in fast-pwm mode with 0xFF as top, TCNT2 will overflow
-		//and we will set OC2B = high (and then OC2B = low at TCNT2 = OCR2B)
+		//and we will set OC2A = high (and then OC2A = low at TCNT2 = OCR2A)
+
+		TCNT2 = 0xFF; //the next timer increment, we will overflow and set OC2B
 	}
 
 }
 
 ISR(TIMER2_COMPA_vect){
 
+	
 	TIMSK2 |= (1<<TOIE2); //enable overflow ISR
 	//because we are in non-inverted fast-pwm mode
-	//OC2B will be cleared upon this compare event.
+	//OC2A will be cleared upon this compare event.
 	
 	//We want to enable the overflow ISR so we can count out 
 	//the rest of the pwm cycle (20ms = 2304 counts @ 128 prescale)
 
 
+}
+
+
+
+
+
+// int delay(unsigned int delay_in_ms){
+// 	int timer_freeze = TCNT2;
+// 	int i = 0;
+// 	for(i = 0; i<= delay_in_ms; i++){
+// 		TCNT2 = 1; //clear timer (value is saved in timer_freeze)
+// 		//we have to set it to 1 instead of 0 
+// 		//setting to TCNT2 = 0 would put OC2B -> HIGH due to fast-pwm.
+// 
+// 		//The other way is to clear all of TCCR2A and TCCR2B 
+// 		//at the beginning of this function and then set their 
+// 		//configs back to fast-pwm mode at the end.
+// 		
+// 		//It is simpler just to set TCNT2 = 1 and increment OCR2B as well. 
+// 
+// 		TCCR2B |= (1<<CS20)|(1<<CS22); //128 prescaler
+// 		//timer is actually already running at 128 prescaler but set it anyway.
+// 		//at 128 prescaler, 1ms is 115.2 counts ~ 115 counts as an integer
+// 
+// 		OCR2B = (int)(fclk_128prescaler*1e-3 + 1); //this is 115 counts
+// 		TIFR2 = (1<<OCF2B); //clear flag
+// 		while(!(TIFR2 &(1<<OCF2B))){} //wait until flag is set
+// 	}
+// 	//the FOR-loop makes us wait 1 ms * delay_in_ms until we return timer_freeze
+// 	//(which was the original value of TCNT2)
+// 	
+// 	return timer_freeze;
+// }
+
+
+void delay(int delay)
+{
+	int i=0;
+	for(i=0;i<delay;i++){
+		TCCR0A=0; 
+		TCCR0B = (1<<CS00) | (1<<CS02); //1024 prescaler @ timer0
+		TCNT0=0;
+		OCR0A = (int)(fclk_1024prescaler*1e-3 -1);
+		TIFR1 = (1<<OCF1A); //clear flag 
+		while(!(TIFR1 &(1<<OCF1A))); //wait until flag is set
+	}
+	TCCR0B =0; //turn off timer0 clock
 }
 
 
@@ -119,21 +175,37 @@ int main()
 
 
 	//***LEFTMOST POSITION***
-	OCR2B = (int)(fclk_128prescaler*1e-3); //1ms pulse is leftmost position
-	
-	reset_val = //need to pick a value of reset_val so that #resets is an integer
-
-
+	OCR2A = (int)(fclk_128prescaler*1e-3); //1ms pulse is leftmost position
 
 	DDRD |= (1<<PD7);   //PWM Pins as Out (OC2A)
+
+	const unsigned short one_ms_pulse = (int)(fclk_128prescaler*1e-3);
+	//leftmost position (0 degrees)
+	
+	const unsigned short two_ms_pulse = (int)(fclk_128prescaler*2e-3);
+	//rightmost position (180 degrees)
+
+	unsigned short one_degree_pulse = (int)(one_ms_pulse/180); 
+	//1ms pulse puts motor to 0deg position. 2ms pulse puts motor to 180deg
+	//so a 1ms_pulse/180 degrees is the time increment
+
+	const unsigned short delta_theta = 15;
 
 
 	while(1){
 
+		for(int x = one_ms_pulse; x <= two_ms_pulse; x += (one_degree_pulse*delta_theta)){
 
+			OCR2A = x;
+			
 
+			//TCNT2 = delay(100);
 
-
+			delay(50);
+		}
+		
+		OCR2A = one_ms_pulse; //reset back to leftmost position		
 	}
 }
+
 
