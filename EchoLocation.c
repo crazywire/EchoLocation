@@ -8,15 +8,10 @@ Created: Feb 17, 2018
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>
 
-
 const float fclk = 14.7456e6;
 const float trigger_pulse_length = 10e-6;
-
-
 volatile uint16_t Rising_E_time=0, Falling_E_time=0, time_elapsed;
-
 volatile unsigned short echo_flag = 0;
-
 unsigned int object_distance = 0;
 
 //**** USART FILE IMPORTS AND FUNCTION DECLARATIONS***
@@ -24,11 +19,6 @@ int uart_putchar(char c, FILE *stream);
 int uart_getchar(FILE *stream);
 FILE mystdout = FDEV_SETUP_STREAM(uart_putchar, NULL, _FDEV_SETUP_WRITE);
 FILE mystdin = FDEV_SETUP_STREAM(NULL, uart_getchar, _FDEV_SETUP_READ);
-
-
-
-
-
 
 ISR(INT0_vect){
 	printf("The External ISR Works \n ");
@@ -52,7 +42,8 @@ ISR(TIMER1_CAPT_vect){
 	if (TCCR1B & (1<<ICES1)){
 		Rising_E_time = ICR1;
 		TCCR1B &= ~(1<<ICES1); //Select the falling edge
-	}else{
+	}
+	else{
 		Falling_E_time = ICR1;
 		TCCR1B |= (1<<ICES1); //Select the rising edge
 	}
@@ -71,7 +62,6 @@ void configure_ports(){
 	DDRD = 0;
 	DDRB |= (1<<PB1);
 }
-
 
 void configure_external_interrupts(){
 	EICRA |= (1<<ISC00)|(1<<ISC01);//rising edge only on INT0 (PD2)
@@ -101,20 +91,6 @@ void init_uart(void)
 	stdin = &mystdin;
 	printf("\n USART system booted\n");
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 int main(void){
 	
