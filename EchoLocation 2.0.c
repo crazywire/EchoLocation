@@ -80,6 +80,11 @@ void init_uart(void)
 	stdin = &mystdin;
 	printf("\n USART system booted\n");
 }
+void trigger_echo(){
+	PORTB |= (1<<PB1); // start trigger pulse(ISR turns this pin off);
+	_delay_us(10);
+	PORTB &= ~(1<<PB1);
+}
 
 //*****************MAIN METHOD**************************
 
@@ -94,9 +99,7 @@ int main(void){
 	while(1){
 		if(echo_flag){
 			echo_flag = 0;
-			PORTB |= (1<<PB1); // start trigger pulse(ISR turns this pin off);
-			_delay_us(10);
-			PORTB &= ~(1<<PB1);
+			trigger_echo();
 			time_elapsed = Falling_E_time-Rising_E_time;
 			object_distance= (int)((time_elapsed*4)/58);
 			printf("The object distance is %d cm \n", object_distance);
