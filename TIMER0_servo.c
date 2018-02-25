@@ -22,7 +22,6 @@ int main(void)
 	
 	// initialize timer0 in PWM mode
 	pwm_init();
-	OCR0A = (int)(fclk/fservo);
 	while(1)
 	{
 		
@@ -30,14 +29,12 @@ int main(void)
 		{
 			OCR0A = x;
 			_delay_ms(1000);
-			OCR0A =(int)(fclk/fservo); //top value 
 		}
-		 
+		
 		for ( int x = ninety_deg_pulse; x > zero_deg_pulse; x -= fifteenDegree)
 		{
 			OCR0A =x;
 			_delay_ms(1000);
-			OCR0A =(int)(fclk/fservo); //top value is reset
 		}
 		
 	}
