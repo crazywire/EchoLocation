@@ -1,7 +1,7 @@
-
 #include <stdio.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <util/delay.h>
 #include <avr/pgmspace.h>
 
 
@@ -25,19 +25,7 @@ FILE mystdin = FDEV_SETUP_STREAM(NULL, uart_getchar, _FDEV_SETUP_READ);
 
 
 ISR(INT0_vect){
-	printf("The External ISR Works \n ");
 	echo_flag = 1;
-	//EIMSK &= ~(1<<INT0); 
-	//disable future interrupts so that only
-	//the first wire touch will raise the flag
-	//(To prevent bounciness)
-	//We will then re-enable the mask in the main once 
-	//all the code has executed as prompted by this 
-	//external interrupt (INT0)
-}
-
-ISR(TIMER1_COMPA_vect){
-	PORTB &=~(1<<PB1);
 }
 
 ISR(TIMER1_CAPT_vect){
@@ -56,8 +44,6 @@ ISR(TIMER1_CAPT_vect){
 void configure_timers(){
 	TCCR1A =0;
 	TCCR1B =(1<<CS11) |(1<<CS10)|(1<<ICES1); //start timer and capture the rising edge
-	TCNT1=0;
-	OCR1A = (int)(fclk*trigger_pulse_length/64); //Top value for compare ~10us
 }
 
 void configure_ports(){	
@@ -65,10 +51,10 @@ void configure_ports(){
 	DDRB |= (1<<PB1);
 }
 
-void configure_external_interrupts(){
+void configure_interrupts(){
 	EICRA |= (1<<ISC00)|(1<<ISC01);//rising edge only on INT0 (PD2)
 	EIMSK |= (1<<INT0);//enable external interrupt
-	TIMSK1 = (1<<ICIE1)|(1<<OCIE1A); //enable input capture interrupt & output compare interrupt
+	TIMSK1 = (1<<ICIE1);
 	sei();
 }
 
@@ -101,7 +87,7 @@ int main(void){
 	
 	configure_ports();
 	configure_timers();
-	configure_external_interrupts();
+	configure_interrupts();
 	init_uart();
 		
 	
@@ -109,6 +95,8 @@ int main(void){
 		if(echo_flag){
 			echo_flag = 0;
 			PORTB |= (1<<PB1); // start trigger pulse(ISR turns this pin off);
+			_delay_us(10);
+			PORTB &= ~(1<<PB1);
 			time_elapsed = Falling_E_time-Rising_E_time;
 			object_distance= (int)((time_elapsed*4)/58);
 			printf("The object distance is %d cm \n", object_distance);
