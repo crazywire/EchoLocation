@@ -2,7 +2,6 @@
 #include <util/delay.h>
 const float fclk = 14.7546e6/1024;
 const float fservo = 60.0;
-const float delta_t = 1.0e-3;
 // initialize PWM
 void pwm_init()
 {
