@@ -13,10 +13,6 @@
 #define F_CPU 14754600
 #include <util/delay.h>
 
-//Formula fPWM = F_CPU/(n*256) = ~56Hz (n = PRESCALER /1024)
-//Atmega644A datasheet
-const float fservo = 52.291; //Operating frequency of the servo
-
 void pwm_init()
 {
 	// initialize timer0 in PWM mode
