@@ -8,8 +8,6 @@
 
 #include <stdio.h>
 #include <avr/io.h>
-#include <avr/interrupt.h>
-#include <avr/pgmspace.h>
 //The CPU frequency
 //It is required by delay.h and TIMERS
 #define F_CPU 14754600
