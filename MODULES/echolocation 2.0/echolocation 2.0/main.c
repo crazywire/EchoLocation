@@ -58,30 +58,6 @@ void init_uart(void)
  Echolocation functions
 */
 
-void configure_ports()
-{
-	DDRD = 0;
-	DDRB |= (1<<PB1);
-}
-
-void configure_interrupts()
-{
-	EICRA |= (1<<ISC00)|(1<<ISC01);//rising edge only on INT0 (PD2)
-	EIMSK |= (1<<INT0);//enable external interrupt
-	
-	TIMSK1 = (1<<ICIE1); //Enable input capture interrupt
-	
-	sei();
-}
-
-void configure_timers()
-{
-	TCCR1A =0;
-	//start timer (PRESCALER /64) 
-	//Capture the rising edge
-	TCCR1B =(1<<CS11) |(1<<CS10)|(1<<ICES1); 
-}
-
 void trigger_echo()
 {
 	//trigger 10uS pulse
@@ -127,9 +103,19 @@ int measure_echo()
 
 int main(void)
 {	
-	configure_ports();
-	configure_interrupts();
-	configure_timers();
+	DDRB |= (1<<PB1);
+	
+	EICRA |= (1<<ISC00)|(1<<ISC01);//rising edge only on INT0 (PD2)
+	EIMSK |= (1<<INT0);//enable external interrupt
+	
+	//start timer (PRESCALER /64)
+	//Capture the rising edge
+	TCCR1B =(1<<CS11) |(1<<CS10)|(1<<ICES1);
+	
+	TIMSK1 = (1<<ICIE1); //Enable input capture interrupt
+	
+	sei();
+	
 	init_uart();
 
 	while(1){
