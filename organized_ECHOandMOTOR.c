@@ -12,7 +12,6 @@
 #include <util/delay.h>
 #include <stdio.h>
 
-
 //clock frequencies at various prescalers
 const float fclk_1 = 14745600;
 const float fclk_8 = 1843200;
