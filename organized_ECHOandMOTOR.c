@@ -46,11 +46,11 @@ ISR(TIMER1_CAPT_vect){
 	//Capture the value of the ICR1 when the falling edge is found
 	if (TCCR1B & (1<<ICES1)){
 		Rising_Edge_cnt = ICR1;
-		TCCR1B &= ~(1<<ICES1); //Select the falling edge
+		TCCR1B &= ~(1<<ICES1); //set to falling edge ISR trigger
 	}
 	else{
 		Falling_Edge_cnt = ICR1;
-		TCCR1B |= (1<<ICES1); //set back to rising edge trigger
+		TCCR1B |= (1<<ICES1); //set to rising edge ISR trigger
 	}
 }
 
