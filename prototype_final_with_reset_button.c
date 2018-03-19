@@ -27,25 +27,17 @@ const float servo_period = 35e-3; //35ms
 
 //PWM pulse lengths (in seconds) for min and max servo motor positions.
 const float min_pos_t = 0.6e-3; //1ms
-const float max_pos_t = 2.35e-3; //4.8ms
+const float max_pos_t = 2.4e-3; //4.8ms
 
 unsigned short motor_angle = 0;
 unsigned short echo_flag = 0;
 unsigned int pulse_counts = 0;
 unsigned int object_distance = 0; //units in cm
 
-
-volatile unsigned short reset_flag = 0;
-
-
-
-
-
-
-
 //these need to be type int because they measure TCNT1 which can go up to 16 bit.
 volatile unsigned int Rising_Edge_cnt = 0;
 volatile unsigned int Falling_Edge_cnt = 0;
+volatile unsigned short reset_flag = 0; //set by external interrupt as reset button
 
 //usart function declarations + file pointers
 int uart_putchar(char c, FILE *stream);
@@ -69,7 +61,7 @@ ISR(TIMER1_CAPT_vect){
 
 
 ISR(INT0_vect){
-	
+	//INT0 (PD2) IS USED AS AN EXTERNAL RESET BUTTON 
 	reset_flag = 1;
 	printf("external interrupt\n");
 
@@ -220,9 +212,9 @@ int main(void){
 	//this variable controls the angle increment when the motor rotates	
 	
     while (1){
+		
+		
 		if(reset_flag){
-			
-			reset_flag = 0;
 			//clear variables at the start of each loop cycle.
 			motor_angle = 0;
 			pulse_counts = 0;
@@ -231,7 +223,6 @@ int main(void){
 		
 			for(unsigned int x = (int)(min_duty_cyc*OCR0A); x <= (int)(max_duty_cyc*OCR0A); x += (int)(duty_per_deg*delta_theta)){
 				OCR0B = x;
-				_delay_ms(350);
 				trigger_echo();
 				pulse_counts = Falling_Edge_cnt -Rising_Edge_cnt ;
 				object_distance = (int)((pulse_counts*4.4)/58); 
@@ -241,7 +232,6 @@ int main(void){
 				if(object_distance > 410){
 					//410 cm = 400 cm +- 2.5% error
 					DDRD &= ~(1<<PD7); //disable speaker output
-				
 					printf("Object out of range. Angle = %u.\n", motor_angle); 				
 				
 				
@@ -254,25 +244,17 @@ int main(void){
 				
 				
 					DDRD |= (1<<PD7); //enable pwm signal to speaker
-					//_delay_ms(150); //brief pause
-					//DDRD &= ~(1<<PD7); //disable pwm signal to speaker
-					//_delay_ms(350);
+					_delay_ms(150); //brief pause
+					DDRD &= ~(1<<PD7); //disable pwm signal to speaker
+					_delay_ms(350);
 			
 				}
-			
-		
-				motor_angle += delta_theta;
+				motor_angle += delta_theta; //increment motor angle
 			}
-			
-			OCR0B = (int)(min_duty_cyc*OCR0A); //reset back to min position
+			reset_flag = 0; //clear reset flag
+			OCR0B = (int)(min_duty_cyc*OCR0A);
+			DDRD &= ~(1<<PD7); //turn off speaker output
+			 //reset back to min position after sweeping the area.
 		}
-		
-		
-		
-		
-		
-		
-		
-		
     }
 }
