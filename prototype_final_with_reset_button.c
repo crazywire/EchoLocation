@@ -63,7 +63,6 @@ ISR(TIMER1_CAPT_vect){
 ISR(INT0_vect){
 	//INT0 (PD2) IS USED AS AN EXTERNAL RESET BUTTON 
 	reset_flag = 1;
-	printf("external interrupt\n");
 
 }
 int uart_putchar(char c, FILE *stream)
@@ -221,7 +220,7 @@ int main(void){
 			object_distance = 0;
 		
 		
-			for(unsigned int x = (int)(min_duty_cyc*OCR0A); x <= (int)(max_duty_cyc*OCR0A); x += (int)(duty_per_deg*delta_theta)){
+			for(unsigned int x = (int)(min_duty_cyc*OCR0A); x < (int)(max_duty_cyc*OCR0A); x += (int)(duty_per_deg*delta_theta)){
 				OCR0B = x;
 				trigger_echo();
 				pulse_counts = Falling_Edge_cnt -Rising_Edge_cnt ;
@@ -229,8 +228,8 @@ int main(void){
 				//conversion factor of 4/58 converted to 4.4/58 in lab to account for 
 				//....real life variance of HY-SRF05 performance.
 	
-				if(object_distance > 410){
-					//410 cm = 400 cm +- 2.5% error
+				if(object_distance > 405){
+					//400 cm with some error
 					DDRD &= ~(1<<PD7); //disable speaker output
 					printf("Object out of range. Angle = %u.\n", motor_angle); 				
 				
@@ -252,7 +251,7 @@ int main(void){
 				motor_angle += delta_theta; //increment motor angle
 			}
 			reset_flag = 0; //clear reset flag
-			OCR0B = (int)(min_duty_cyc*OCR0A);
+			
 			DDRD &= ~(1<<PD7); //turn off speaker output
 			 //reset back to min position after sweeping the area.
 		}
