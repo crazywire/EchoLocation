@@ -27,9 +27,9 @@ const float servo_period = 35e-3; //35ms
 
 //PWM pulse lengths (in seconds) for min and max servo motor positions.
 const float min_pos_t = 0.6e-3; //1ms
-const float max_pos_t = 2.4e-3; //4.8ms
+const float max_pos_t = 2.5e-3; //4.8ms
 
-unsigned short motor_angle = 0;
+short motor_angle = 0;
 unsigned short echo_flag = 0;
 unsigned int pulse_counts = 0;
 unsigned int object_distance = 0; //units in cm
@@ -215,7 +215,7 @@ int main(void){
 		
 		if(reset_flag){
 			//clear variables at the start of each loop cycle.
-			motor_angle = 0;
+			motor_angle = -90;
 			pulse_counts = 0;
 			object_distance = 0;
 		
@@ -236,7 +236,7 @@ int main(void){
 				
 				}
 				else{
-					printf("Object distance = %u cm. Angle = %u.\n", object_distance, motor_angle);
+					printf("Object distance = %u cm. Angle = %d.\n", object_distance, motor_angle);
 					OCR2A = audio_feedback(object_distance); 
 					//set OCR2A to the appropriate value for the distance of the object
 					//so the audio frequency from the speaker corresponds to the object distance
@@ -249,9 +249,10 @@ int main(void){
 			
 				}
 				motor_angle += delta_theta; //increment motor angle
+				_delay_ms(60);
 			}
 			reset_flag = 0; //clear reset flag
-			
+			OCR0B = (int)(min_duty_cyc*OCR0A); //return motor to initial position
 			DDRD &= ~(1<<PD7); //turn off speaker output
 			 //reset back to min position after sweeping the area.
 		}
