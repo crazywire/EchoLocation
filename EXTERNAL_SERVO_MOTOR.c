@@ -85,10 +85,6 @@ void interrupt_cfg(){
 	
 	EIMSK |= (1<<INT2); //INT2 = PB2
 	EICRA |= (1<<ISC20); //any logical change triggers ISR
-	
-	
-	
-	EICRA |= (1<<ISC21); //remove this later
 }
 
 int main(void){
@@ -99,8 +95,13 @@ int main(void){
 	sei();
 	
 	DDRD |= (1<<PD4); //set OC1B to output 
+
 	
-	unsigned short delta_theta = 15; //CHANGE THIS TO CHANGE THE INCREMENT ANGLE
+	
+	PORTB &= ~(1<<PB2);
+	DDRB |= (1<<PB2);
+	
+	unsigned short delta_theta = 10; //CHANGE THIS TO CHANGE THE INCREMENT ANGLE
 	
 	const float duty_per_deg = ((max_duty_cycle - min_duty_cycle)/180.0);
 	//how much the duty cycle must increase per additional motor angle
@@ -148,4 +149,3 @@ int main(void){
 	
 	
 }//end of main
-
