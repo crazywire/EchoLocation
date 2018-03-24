@@ -238,37 +238,34 @@ int main(void){
 	
     while (1){
 	
-		servo_call();
-		_delay_ms(500);
-	
+		//clear variables at the start of each loop cycle.
+		pulse_counts = 0;
+		object_distance = 0;
 
+		trigger_echo();
+		pulse_counts = Falling_Edge_cnt -Rising_Edge_cnt ;
+		object_distance = (int)((pulse_counts*4.4)/58); 
+		//conversion factor of 4/58 converted to 4.4/58 in lab to account for 
+		//....real life variance of HY-SRF05 performance.
 	
-// 			//clear variables at the start of each loop cycle.
-// 			pulse_counts = 0;
-// 			object_distance = 0;
-// 
-// 				trigger_echo();
-// 				pulse_counts = Falling_Edge_cnt -Rising_Edge_cnt ;
-// 				object_distance = (int)((pulse_counts*4.4)/58); 
-// 				//conversion factor of 4/58 converted to 4.4/58 in lab to account for 
-// 				//....real life variance of HY-SRF05 performance.
-// 	
-// 				if(object_distance > 405){
-// 					//400 cm with some error
-// 					DDRD &= ~(1<<PD7); //disable speaker output
-// 					printf("Object out of range.\n");								
-// 				}
-// 				else{
-// 					printf("Object distance = %u cm. \n", object_distance);
-// 					OCR2A = audio_feedback(object_distance); 
-// 					//set OCR2A to the appropriate value for the distance of the object
-// 					//so the audio frequency from the speaker corresponds to the object distance
-// 				
-// 				
-// 					DDRD |= (1<<PD7); //enable pwm signal to speaker
-// 					_delay_ms(150); //brief pause
-// 					DDRD &= ~(1<<PD7); //disable pwm signal to speaker
-// 					_delay_ms(350);
-//				}
+		if(object_distance > 405){
+			//400 cm with some error
+			DDRD &= ~(1<<PD7); //disable speaker output
+			printf("Object out of range.\n");								
+		}
+		else{
+			printf("Object distance = %u cm. \n", object_distance);
+			OCR2A = audio_feedback(object_distance); 
+			//set OCR2A to the appropriate value for the distance of the object
+			//so the audio frequency from the speaker corresponds to the object distance
+				
+				
+			DDRD |= (1<<PD7); //enable pwm signal to speaker
+			_delay_ms(150); //brief pause
+			DDRD &= ~(1<<PD7); //disable pwm signal to speaker
+			_delay_ms(350);
+			}
+		servo_call();
+		_delay_ms(350);
     }
 }
