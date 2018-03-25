@@ -27,8 +27,8 @@
 //distance conversion from clock counts to cm at prescaler of 8
 
 #define servo_period 0.02 //20ms
-#define min_duty_cyc 0.028 //experimentally determined value
-#define max_duty_cyc 0.12 //experimentally determined value
+#define min_duty_cyc 0.027 //experimentally determined value
+#define max_duty_cyc 0.121 //experimentally determined value
 #define duty_per_degree ((max_duty_cyc-min_duty_cyc)/180)
 
 short motor_angle = -90;
@@ -82,8 +82,7 @@ ISR(TIMER1_CAPT_vect){
 int main(void){
 	init_uart();
 	ports_config();
-	timer1_echo_config(); //echo device
-	
+	timer1_servo_config();
 	timer2_config(); //audio feedback from speaker
 	sei();
 	
@@ -91,18 +90,15 @@ int main(void){
 	
 	OCR1B = (unsigned int)(min_duty_cyc*OCR1A); //min position
 
-	
-	
-
 																										
 	while (1){
 		timer1_echo_config();
 		object_distance = measure_distance();
+		printf("Object distance = %u. ", object_distance);
 //		audio_feedback(object_distance); //3000ms audio pulse
-		printf("distance = %u, angle = %d \n", object_distance, motor_angle);
 		timer1_servo_config(); //set timer1 to servo mode.
+		_delay_ms(50);
 		rotate_motor(15);
-		
 		_delay_ms(300);
 		
 		
@@ -169,7 +165,6 @@ void timer1_servo_config(){
 	//Phase correct pwm, top at OCR1A
 	//Set OC1B on downcount, clear on upcount
 	
-	
 	TCCR1B = (1<<WGM13)|(1<<CS11); 
 	//phase correct pwm, top at OCR1A
 	//8 prescaler
@@ -188,8 +183,8 @@ void timer1_echo_config(){
 	
 	TCCR1A = 0; //DO NOT REMOVE THIS.  
 	//IT CLEARS THE REGISTER FROM THE SERVO INITIALIZATION
-	
 	TIMSK1 = (1<<ICIE1); //enble input capture in mask 
+	TCNT1 = 0;
 }
 
 void timer2_config(){
@@ -246,7 +241,7 @@ int measure_distance(){
 
 
 void rotate_motor(unsigned short angle){
-	
+	printf("Motor angle = %d\n", motor_angle);
 	OCR1B += (unsigned int)(duty_per_degree*OCR1A*angle);
 	motor_angle += angle;
 	
@@ -254,5 +249,7 @@ void rotate_motor(unsigned short angle){
 		
 		OCR1B = (unsigned int)(min_duty_cyc*OCR1A);
 		motor_angle = -90; //reset variable to initial position
+		printf("\n\n");
 	}
+	
 }
