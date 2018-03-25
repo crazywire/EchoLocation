@@ -87,10 +87,11 @@ int main(void){
 	timer2_config(); //audio feedback from speaker
 	sei();
 	
-	timer1_servo_config();
 	
 	
 	OCR1B = (unsigned int)(min_duty_cyc*OCR1A); //min position
+
+	
 	
 
 																										
@@ -98,10 +99,10 @@ int main(void){
 		timer1_echo_config();
 		object_distance = measure_distance();
 //		audio_feedback(object_distance); //3000ms audio pulse
-//		printf("distance = %u, angle = %d \n", object_distance, motor_angle);
+		printf("distance = %u, angle = %d \n", object_distance, motor_angle);
 		timer1_servo_config(); //set timer1 to servo mode.
 		rotate_motor(15);
-		printf("OCR1B = %u\n", OCR1B);
+		
 		_delay_ms(300);
 		
 		
@@ -139,7 +140,7 @@ void init_uart(void)
 	UBRR0 = 95;//7; // configures a baud rate of 115200
 	stdout = &mystdout;
 	stdin = &mystdin;
-	printf("\nUSART system booted\n");
+	printf("\n"); 
 }
 void ports_config(){
 	//****PORTS FOR SERVO MOTOR****
@@ -179,16 +180,16 @@ void timer1_servo_config(){
 
 
 void timer1_echo_config(){
-	//TIMER1 IS USED FOR THE ECHOLOCATOR
-
-	//64 prescaler
+	//8 prescaler
 	//set input capture detection to rising edge
 	//enable input capture interrupt in TIMSK1
 	
-	TCCR1B = (1<<CS11)|(1<<ICES1);
-	TCCR1B |= (1<<ICES1); //rising edge select 
-	TIMSK1 |= (1<<ICIE1); //enble input capture in mask 
+	TCCR1B = (1<<CS11)|(1<<ICES1)|(1<<ICNC1);
 	
+	TCCR1A = 0; //DO NOT REMOVE THIS.  
+	//IT CLEARS THE REGISTER FROM THE SERVO INITIALIZATION
+	
+	TIMSK1 = (1<<ICIE1); //enble input capture in mask 
 }
 
 void timer2_config(){
@@ -246,16 +247,12 @@ int measure_distance(){
 
 void rotate_motor(unsigned short angle){
 	
-	if(OCR1B < (unsigned int)(max_duty_cyc*OCR1A)){
+	OCR1B += (unsigned int)(duty_per_degree*OCR1A*angle);
+	motor_angle += angle;
+	
+	if(OCR1B > (unsigned int)(OCR1A*max_duty_cyc)){
 		
-		OCR1B +=(unsigned int)(duty_per_degree*angle*OCR1A);
+		OCR1B = (unsigned int)(min_duty_cyc*OCR1A);
+		motor_angle = -90; //reset variable to initial position
 	}
-	
-	
-	
-	
-	
-	
-	
-	
 }
