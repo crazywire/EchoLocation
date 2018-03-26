@@ -75,10 +75,10 @@ int main(void){
 		if(ext_flag){
 			_delay_ms(10);
 			object_distance = measure_distance();
-			//audio_feedback(object_distance);
-			_delay_ms(150);
+			audio_feedback(object_distance);
+			_delay_ms(25);
 			servo_call();
-			printf("%u,%d.", object_distance, motor_angle);
+			printf("%d,%u.", motor_angle,object_distance);
 		}
 	}
 }
@@ -103,7 +103,7 @@ int uart_getchar(FILE *stream)
 void init_uart(void)
 {
 	UCSR0B = (1<<RXEN0) | (1<<TXEN0);
-	UBRR0 = 95;//7; // configures a baud rate of 115200
+	UBRR0 = 95; // configures a baud rate of 115200
 	stdout = &mystdout;
 	stdin = &mystdin;
 	printf("\n");
