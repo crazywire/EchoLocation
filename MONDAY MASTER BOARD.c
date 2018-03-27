@@ -19,8 +19,11 @@
 #define min_duty_cyc 0.027 //experimentally determined value
 #define max_duty_cyc 0.121 //experimentally determined value
 #define duty_per_degree ((max_duty_cyc-min_duty_cyc)/180)
-#define max_distance 400 //units in cm
+#define max_distance 400 //units in cm																
 short motor_angle = -90;
+float audio_frequency = 261.6;
+
+
 
 volatile short ext_flag = 0;
 
@@ -31,13 +34,13 @@ unsigned int object_distance = 0;
 //FUNCTION PROTOTYPES
 int uart_putchar(char c, FILE *stream);
 int uart_getchar(FILE *stream);
-int measure_distance();
+unsigned int measure_distance();
 void init_uart(void);
 void port_config();
 void timer1_config();
 void interrupt_cfg();
 void timer2_config(); 
-void audio_feedback();
+void audio_feedback(unsigned int distance, float frequency);
 void servo_call();
 
 FILE mystdout = FDEV_SETUP_STREAM(uart_putchar, NULL, _FDEV_SETUP_WRITE);
@@ -74,10 +77,9 @@ int main(void){
 	while(1){
 		if(ext_flag){
 			object_distance = measure_distance();
-			//audio_feedback(object_distance);
-			_delay_ms(50);
-			//printf("Distance = %u,Motor angle = %d.\n", object_distance , motor_angle);
-			printf("%d,%u.", motor_angle, object_distance);
+			audio_feedback(object_distance, audio_frequency);
+			printf("Distance = %u,Motor angle = %d.\n", object_distance , motor_angle);
+			//printf("%d,%u.", motor_angle, object_distance);
 			servo_call();
 		}
 	}
@@ -153,18 +155,33 @@ void timer2_config(){
 	//This puts OCR2A ~ [198 ->>117]
 }
 
-void audio_feedback(unsigned int distance){
+void audio_feedback(unsigned int distance, float frequency){
 	if(distance < max_distance){ //If the object is in range...
-		float audio_frequency = 261.6 + 0.581*distance;
-		OCR2A = (unsigned short)(fclk_128/(2*audio_frequency));
-		DDRD |= (1<<PD7); //enable pwm signal to speaker
-		_delay_ms(3000);
-		DDRD &= ~(1<<PD7); //disable pwm signal to speaker
+		 // = 261.6 + 0.581*distance;
+		if((distance >= 0)&&(distance <= 36)){audio_frequency = 261.6;}
+		if((distance > 36)&&(distance <= 73)){audio_frequency = 282.7;}
+		if((distance > 73)&&(distance <=109)){audio_frequency = 303.8;}
+		if((distance > 109)&&(distance <= 145)){audio_frequency = 324.9;}
+		if((distance > 145)&&(distance <= 182)){audio_frequency = 346;}
+		if((distance > 182)&&(distance <= 218)){audio_frequency = 367.3;}
+		if((distance > 218)&&(distance <= 254)){audio_frequency = 388.3;}
+		if((distance >254)&&(distance <= 291)){audio_frequency = 409.4;}
+		if((distance >291)&&(distance <= 327)){audio_frequency = 430.5;}
+		if((distance >327)&&(distance <= 364)){audio_frequency = 451.7;}
+		if((distance >364)&&(distance <= 400)){audio_frequency = 472.8;}
+		if(distance > 400){audio_frequency = 493.9;}
+		
+		if(frequency != audio_frequency){
+			OCR2A = (unsigned short)(fclk_128/(2*audio_frequency));									
+			DDRD |= (1<<PD7); //enable pwm signal to speaker
+			_delay_ms(3000);
+			DDRD &= ~(1<<PD7); //disable pwm signal to speaker
+		}
 	}
 }
 
 
-int measure_distance(){
+unsigned int measure_distance(){
 	PORTB |= (1<<PB1); //write pin B1 high, wait 10microsec, write PB1 low.
 	_delay_us(10);
 	PORTB &= ~(1<<PB1);
@@ -193,3 +210,5 @@ void servo_call(){
 		ext_flag = 0;
 	}
 }
+
+
