@@ -1,0 +1,28 @@
+Distance = 5, Angle = 115
+
+Distance = 5, Angle = 120
+
+Distance = 4, Angle = 125
+
+Distance = 116, Angle = 130
+
+Distance = 4, Angle = 135
+
+Distance = 4, Angle = 140
+
+Distance = 4, Angle = 145
+
+Distance = 67, Angle = 150
+
+Distance = 14, Angle = 155
+
+Distance = 14, Angle = 160
+
+Distance = 15, Angle = 165
+
+Distance = 15, Angle = 170
+
+Distance = 128, Angle = 175
+
+Distance = 128, Angle = 180
+
