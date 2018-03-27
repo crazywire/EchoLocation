@@ -73,12 +73,12 @@ int main(void){
 	
 	while(1){
 		if(ext_flag){
-			_delay_ms(10);
 			object_distance = measure_distance();
-			audio_feedback(object_distance);
-			_delay_ms(25);
+			//audio_feedback(object_distance);
+			_delay_ms(50);
+			//printf("Distance = %u,Motor angle = %d.\n", object_distance , motor_angle);
+			printf("%d,%u.", motor_angle, object_distance);
 			servo_call();
-			printf("%d,%u.", motor_angle,object_distance);
 		}
 	}
 }
@@ -184,7 +184,7 @@ int measure_distance(){
 void servo_call(){
 		
 	PORTB |= (1<<PB7);
-	_delay_ms(500);
+	_delay_ms(10);
 	PORTB &= ~(1<<PB7);
 
 	motor_angle += 5;
