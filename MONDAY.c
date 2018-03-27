@@ -38,11 +38,10 @@ FILE mystdout = FDEV_SETUP_STREAM(uart_putchar, NULL, _FDEV_SETUP_WRITE);
 FILE mystdin = FDEV_SETUP_STREAM(NULL, uart_getchar, _FDEV_SETUP_READ);
 
 ISR(INT0_vect){
-	
-	
-	
 	OCR1B = (unsigned short)(min_duty_cycle*OCR1A);
 }
+
+
 
 
 int uart_putchar(char c, FILE *stream)
@@ -93,13 +92,12 @@ int main(void){
 	PORTB &= ~(1<<PB2);
 	DDRB |= (1<<PB2);
 	const float duty_per_deg = ((max_duty_cycle - min_duty_cycle)/180.0);
-	unsigned short delta_theta = 10; //CHANGE THIS TO CHANGE THE INCREMENT ANGLE
+	unsigned short delta_theta = 5; //CHANGE THIS TO CHANGE THE INCREMENT ANGLE
 	unsigned short cnts_per_deg = (unsigned short)(duty_per_deg*OCR1A);
 	unsigned short min_pos_cnts = (unsigned short)(min_duty_cycle*OCR1A);
 	unsigned short max_pos_cnts = (unsigned short)(max_duty_cycle*OCR1A);
 	unsigned short cnts_per_position = (unsigned short)(cnts_per_deg*delta_theta);
 	OCR1B = min_pos_cnts; //initialize motor control to position 0.
-
     while (1) 
     {
 		if(ext_flag){
@@ -110,4 +108,8 @@ int main(void){
 			}
 		}	
     }//end of while	
+
+
 }//end of main
+
+	
