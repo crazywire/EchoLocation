@@ -78,8 +78,7 @@ int main(void){
 		if(ext_flag){
 			object_distance = measure_distance();
 			audio_feedback(object_distance, audio_frequency);
-			printf("Distance = %u,Motor angle = %d.\n", object_distance , motor_angle);
-			//printf("%d,%u.", motor_angle, object_distance);
+			printf("%u,%d.", object_distance , motor_angle);
 			servo_call();
 		}
 	}
@@ -108,7 +107,6 @@ void init_uart(void)
 	UBRR0 = 95; // configures a baud rate of 115200
 	stdout = &mystdout;
 	stdin = &mystdin;
-	printf("\n");
 }
 
 void port_config(){
@@ -193,11 +191,6 @@ unsigned int measure_distance(){
 }
 
 
-
-
-
-
-
 void servo_call(){
 		
 	PORTB |= (1<<PB7);
@@ -208,6 +201,9 @@ void servo_call(){
 	if(motor_angle > 90){
 		motor_angle = -90;
 		ext_flag = 0;
+		object_distance = 0;
+		printf("4000,%d.", motor_angle); 
+		//4000 is the signal to processing to terminate serial communication
 	}
 }
 
